@@ -1,0 +1,168 @@
+local ScreenGui = Instance.new("ScreenGui")
+local Frame = Instance.new("Frame")
+local Roundify = Instance.new("ImageLabel")
+local TextButton = Instance.new("TextButton")
+local CoreGuiName = "StealToolGui"
+
+ScreenGui.Parent = game:GetService("CoreGui")
+ScreenGui.Name = CoreGuiName
+
+Frame.Parent = ScreenGui
+Frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+Frame.BorderColor3 = Color3.fromRGB(92, 196, 209)
+Frame.BorderSizePixel = 0
+Frame.Position = UDim2.new(0.613636434, 0, 0.666034043, 0)
+Frame.Size = UDim2.new(0, 115, 0, 78)
+Frame.Visible = false
+
+Roundify.Name = "Roundify"
+Roundify.Parent = Frame
+Roundify.AnchorPoint = Vector2.new(0.5, 0.5)
+Roundify.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+Roundify.BackgroundTransparency = 1.000
+Roundify.Position = UDim2.new(0.491304338, 0, 0.487179488, 0)
+Roundify.Size = UDim2.new(0.895652175, 24, 0.846153855, 24)
+Roundify.ZIndex = 0
+Roundify.Image = "rbxassetid://3570695787"
+Roundify.ImageColor3 = Color3.fromRGB(30, 30, 30)
+Roundify.ScaleType = Enum.ScaleType.Slice
+Roundify.SliceCenter = Rect.new(100, 100, 100, 100)
+Roundify.SliceScale = 0.120
+
+TextButton.Parent = Frame
+TextButton.BackgroundColor3 = Color3.fromRGB(255, 30, 30)
+TextButton.BorderColor3 = Color3.fromRGB(92, 196, 209)
+TextButton.Position = UDim2.new(0.0869562477, 0, 0.211465284, 0)
+TextButton.Size = UDim2.new(0, 92, 0, 45)
+TextButton.Font = Enum.Font.SciFi
+TextButton.Text = "Destroy Force Y"
+TextButton.TextColor3 = Color3.fromRGB(92, 196, 209)
+TextButton.TextScaled = true
+TextButton.TextSize = 14.000
+TextButton.TextWrapped = true
+
+---------------------------------------------------------
+
+local function SJFGYW_fake_script()
+	local script = Instance.new('LocalScript', Frame)
+	frame = script.Parent
+	frame.Draggable = true
+	frame.Active = true
+	frame.Selectable = true
+end
+coroutine.wrap(SJFGYW_fake_script)()
+
+tool = Instance.new("Tool")
+tool.RequiresHandle = false
+tool.Name = "Stealer Tool"
+tool.ToolTip = "Modified Stealer Tool. Hold Shift to move. And you can also destroy force just press Y."
+
+local plr = game.Players.LocalPlayer
+local mouse = game.Players.LocalPlayer:GetMouse()
+local hrp = plr.Character.HumanoidRootPart
+local uis = game:GetService('UserInputService')
+local active_tool = true
+local active = false
+local mouse_active = false
+local locked_part = false
+local locked_part_pos
+local rr
+local rp = RaycastParams.new()
+rp.FilterType = Enum.RaycastFilterType.Blacklist
+rp.FilterDescendantsInstances = {plr.Character, part}
+rp.IgnoreWater = true
+parts = {}
+
+uis.InputBegan:Connect(function(key)
+    if key.KeyCode == Enum.KeyCode.Y and tool.Parent == plr.Character then
+        active_tool = false
+        Frame.Visible = false
+        locked_part = false
+        Frame.Position = UDim2.new(0.613636434, 0, 0.666034043, 0)
+    end
+end)
+TextButton.MouseButton1Click:Connect(function()
+    active_tool = false
+    Frame.Visible = false
+    locked_part = false
+    Frame.Position = UDim2.new(0.613636434, 0, 0.666034043, 0)
+end)
+
+uis.InputBegan:Connect(function(key)
+    if key.KeyCode == Enum.KeyCode.LeftShift and tool.Parent == plr.Character then
+        active = true
+    end
+end)
+uis.InputEnded:Connect(function(key)
+    if key.KeyCode == Enum.KeyCode.LeftShift then
+        active = false
+    end
+end)
+
+uis.InputBegan:Connect(function(key)
+    if key.KeyCode == Enum.KeyCode.G and tool.Parent == plr.Character then
+        if locked_part == false then
+            locked_part = true
+            if #parts > 0 then
+                local pos = Vector3.new(0, 0, 0)
+                for i, v in ipairs(parts) do
+                    pos = pos + v.Position
+                end
+                pos = pos / #parts
+                locked_part_pos = pos
+            end
+        else
+            locked_part = false
+        end
+    end
+end)
+
+tool.Activated:connect(function()
+    local part = mouse.Target
+    if part:IsDescendantOf(workspace.Parts) or part:IsDescendantOf(workspace.Items) then
+        if not part:IsGrounded() then
+            if not table.find(parts, part) then
+                active_tool = true
+                Frame.Visible = true
+                table.insert(parts, part)
+                local PlayerHumanoid = game:GetService("Workspace"):FindFirstChild(game:GetService("Players").LocalPlayer.Name)
+                local bpos = Instance.new("BodyPosition", part)
+                local bgyro = Instance.new("BodyGyro", part)
+                bpos.Position = plr.Character.Head.Position+Vector3.new(0, 5+math.max(part.Size.X, part.Size.Y, part.Size.Z), 0)
+                bpos.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+                bgyro.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+                bpos.P = 600
+                bpos.D = 50
+                game:GetService('ReplicatedStorage').Remotes.GetNetworkOwnershipAuto:InvokeServer(part)
+                
+                while wait() do
+                    if locked_part then
+                        game:GetService('ReplicatedStorage').Remotes.ClientRequestOwnership:FireServer(part)
+                        bpos.Position = locked_part_pos
+                    else
+                        if active == true then
+                            rp.FilterDescendantsInstances = {plr.Character, part}
+                            rr = workspace:Raycast(mouse.UnitRay.Origin, mouse.UnitRay.Direction * 10000, rp)
+                            if rr ~= nil then
+                                game:GetService('ReplicatedStorage').Remotes.ClientRequestOwnership:FireServer(part)
+                                bpos.Position = rr.Position+Vector3.new(0, 10 + part.Size.Y + part.Size.X + part.Size.Z, 0)
+                            end
+                        else
+                            game:GetService("ReplicatedStorage").Remotes.ClientRequestOwnership:FireServer(part)
+                            bpos.Position = plr.Character.Head.Position + Vector3.new(0, 10 + part.Size.Y + part.Size.X + part.Size.Z, 0)
+                        end
+                    end
+                    
+                    if active_tool == false or plr.Character.Humanoid.Health <= 0 then
+                        table.remove(parts, table.find(parts, part))
+                        bgyro:Destroy()
+                        bpos:Destroy()
+                        break
+                    end
+                end
+            end
+        end
+    end
+end)
+
+tool.Parent = game.Players.LocalPlayer.Backpack
